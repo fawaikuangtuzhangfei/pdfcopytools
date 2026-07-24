@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>PDF 顺手复制 · 设置</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="head">
+      <div class="logo">✂️</div>
+      <div>
+        <h1>PDF 顺手复制</h1>
+        <p class="sub">接管 PDF 渲染，复制时自动还原段落换行。</p>
+      </div>
+    </header>
+
+    <section id="welcome" class="welcome" hidden>
+      <strong>安装成功 🎉 还差一步：</strong>
+      <p>要在本地文件（<code>file://</code> 打开的 PDF）上生效，请到
+        <code>chrome://extensions</code> → 找到本扩展 → 打开
+        <b>「允许访问文件网址」</b>。在线 PDF 无需此步。</p>
+    </section>
+
+    <section class="card">
+      <label class="row switch">
+        <span>
+          <b>启用净化</b>
+          <em>关闭后不再接管 PDF，复制走浏览器默认行为</em>
+        </span>
+        <input type="checkbox" id="enabled" />
+      </label>
+    </section>
+
+    <section class="card">
+      <h2>复制规则</h2>
+      <label class="row">
+        <span><b>拉丁词跨行补空格</b><em>英文单词因折行断开时自动补回空格</em></span>
+        <input type="checkbox" id="latinSpace" />
+      </label>
+      <label class="row">
+        <span><b>英文连字符拼回</b><em>行末 “inter-” + 下一行 “national” → “international”</em></span>
+        <input type="checkbox" id="dehyphenate" />
+      </label>
+      <label class="row">
+        <span><b>中英之间加空格</b><em>如「调用 Skill」。默认关闭，贴近中文排版习惯</em></span>
+        <input type="checkbox" id="cjkLatinSpace" />
+      </label>
+      <label class="row">
+        <span><b>保留项目符号 / 编号</b><em>识别 • - 1. 等，列表项各自成段</em></span>
+        <input type="checkbox" id="keepBullets" />
+      </label>
+    </section>
+
+    <section class="card">
+      <h2>交互</h2>
+      <label class="row">
+        <span><b>复制后轻提示</b><em>右下角短暂显示「已整理换行」</em></span>
+        <input type="checkbox" id="showToast" />
+      </label>
+      <label class="row">
+        <span><b>原始复制（不净化）</b><em>按住该键复制即得到未处理文本</em></span>
+        <select id="rawCopyModifier">
+          <option value="alt">按住 Alt</option>
+          <option value="shift">按住 Shift</option>
+          <option value="none">不启用</option>
+        </select>
+      </label>
+    </section>
+
+    <footer class="foot">
+      <span id="status" class="status"></span>
+      <span class="ver">v0.1.0</span>
+    </footer>
+  </main>
+  <script src="options.js" type="module"></script>
+</body>
+</html>

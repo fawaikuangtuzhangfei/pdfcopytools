@@ -1,0 +1,27 @@
+:root {
+  --bg: #ffffff; --ink: #1c1d21; --muted: #6b7280; --line: #e7e8ec; --accent: #2f6bff;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1f2024; --ink: #eceef2; --muted: #9aa0aa; --line: #2c2e34; --accent: #6f9bff; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 13px/1.5 -apple-system, "PingFang SC", "Microsoft YaHei", Segoe UI, sans-serif; }
+.pop { width: 260px; padding: 14px 16px; }
+.title { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+.ico { font-size: 16px; }
+.toggle { display: flex; align-items: center; justify-content: space-between;
+  margin: 14px 0 10px; }
+#stateText { font-weight: 600; }
+input[type=checkbox] { appearance: none; width: 42px; height: 24px; border-radius: 999px;
+  background: var(--line); position: relative; cursor: pointer; transition: background .15s; }
+input[type=checkbox]::after { content: ""; position: absolute; top: 2px; left: 2px;
+  width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .15s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+input[type=checkbox]:checked { background: var(--accent); }
+input[type=checkbox]:checked::after { transform: translateX(18px); }
+.hint { color: var(--muted); font-size: 12px; margin: 4px 0 12px; }
+kbd { background: var(--line); border-radius: 4px; padding: 0 4px; font-size: 11px; }
+.link { background: none; border: none; color: var(--accent); cursor: pointer;
+  padding: 0; font-size: 13px; }
+.link:hover { text-decoration: underline; }

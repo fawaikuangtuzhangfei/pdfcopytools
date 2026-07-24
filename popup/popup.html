@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>PDF 顺手复制</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="pop">
+    <div class="title"><span class="ico">✂️</span> PDF 顺手复制</div>
+    <label class="toggle">
+      <span id="stateText">已启用</span>
+      <input type="checkbox" id="enabled" />
+    </label>
+    <p class="hint">选中 PDF 文字 → <kbd>Ctrl/⌘</kbd>+<kbd>C</kbd> → 粘贴即干净。<br>
+      按住 <kbd>Alt</kbd> 复制可得原始文本。</p>
+    <button id="openOptions" class="link">更多设置 ›</button>
+  </div>
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

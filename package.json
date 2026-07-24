@@ -1,0 +1,10 @@
+{
+  "name": "pdfcopytools",
+  "version": "0.1.0",
+  "description": "Chrome 扩展：接管 PDF 渲染，复制时自动还原段落换行",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}
