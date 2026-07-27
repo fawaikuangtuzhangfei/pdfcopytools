@@ -98,6 +98,10 @@ addEventListener('copy', (e) => {
   if (e.clipboardData) {
     e.clipboardData.setData('text/plain', cleaned);
     e.preventDefault();
+    // 关键：阻止事件继续传播。否则 pdf.js 文本层自带的 copy 处理器（冒泡阶段）会用
+    // selection.toString()（含原始换行）再次覆盖 text/plain，把我们整理好的结果冲掉。
+    // 我们在 window 捕获阶段最先执行，stopImmediatePropagation 可拦下后续所有处理器。
+    e.stopImmediatePropagation();
     if (settings.showToast) showCopyToast('已整理换行');
   }
 }, true);
