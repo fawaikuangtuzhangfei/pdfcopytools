@@ -1,0 +1,15 @@
+name: 功能建议 / Feature request
+description: 新想法、配置项、版面适配等 / New ideas, options, layout support, etc.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: 想解决什么问题 / What problem does this solve
+      description: 描述使用场景，而不仅是方案。/ Describe the use case, not just the proposed solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 设想的做法（可选）/ Proposed approach (optional)

@@ -1,0 +1,44 @@
+name: Bug 反馈 / Bug report
+description: 复制结果不对、无法进入阅读器、加载报错等 / Wrong copy result, viewer not loading, load errors, etc.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！段落重建是启发式的，遇到复杂版面（多栏/表格/公式）可能误判。
+        请尽量附上可复现的 PDF 片段或截图。
+        Thanks! Paragraph rebuild is heuristic and may misfire on complex layouts.
+        Please attach a reproducible PDF snippet or screenshot if possible.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 现象 / What happened
+      description: 你选中了什么、复制粘贴后得到什么、期望是什么。/ What you selected, what you got after paste, what you expected.
+      placeholder: |
+        选中：xxx
+        粘贴得到：xxx
+        期望：xxx
+    validations:
+      required: true
+  - type: dropdown
+    id: pdf-source
+    attributes:
+      label: PDF 来源 / PDF source
+      options:
+        - 本地文件 file://
+        - 在线 http(s)
+        - 两者都有 / both
+    validations:
+      required: true
+  - type: input
+    id: chrome-version
+    attributes:
+      label: Chrome 版本 / Chrome version
+      placeholder: "例如 / e.g. 128.0.6613.120"
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: 截图 / 控制台报错（可选）/ Screenshots / console errors (optional)
+      description: 可把 viewer 页面控制台（F12）里的红色报错贴上来。/ Paste any red errors from the viewer page console (F12).
