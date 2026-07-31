@@ -1,6 +1,7 @@
 // 运行在 pdf.js 阅读器页内：拦截 copy 事件，用坐标重建段落后写回剪贴板。
 import { reflow } from './reflow.js';
 import { showCopyToast } from './toast.js';
+import { initParagraphCopy } from './paragraph-copy.js';
 
 const DEFAULT_SETTINGS = {
   enabled: true,
@@ -9,6 +10,7 @@ const DEFAULT_SETTINGS = {
   cjkLatinSpace: false,
   keepBullets: true,
   showToast: true,
+  paragraphCopy: true,
   rawCopyModifier: 'alt',
 };
 
@@ -28,6 +30,9 @@ try {
     if (area === 'sync') loadSettings();
   });
 } catch { /* ignore */ }
+
+// 段落速复制：hover 段落浮出「复制整段」按钮。共用同一份 settings（读实时值）。
+initParagraphCopy({ getSettings: () => settings });
 
 // 跟踪修饰键状态，用于“原始复制”兜底
 const held = { alt: false, shift: false };

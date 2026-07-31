@@ -129,23 +129,22 @@ function bodyLeftOf(lines, H) {
   return median(byBucket.get(bestKey));
 }
 
-export function reflow(items, options = {}) {
-  const opts = { ...DEFAULTS, ...options };
-  const valid = (items || []).filter((it) => it && typeof it.str === 'string' && it.str.trim() !== '');
-  if (!valid.length) return '';
-
+// 把坐标化文本项切成段落，返回 [{ text, items }]。
+// items 为该段落包含的原始输入项（对象引用原样保留，调用方挂在项上的
+// 额外字段如 node 也会被带出，便于把段落映射回 DOM）。
+function buildParagraphs(valid, opts) {
   const H = median(valid.map((it) => it.height).filter((h) => h > 0)) || 12;
 
-  // 1) 聚行 + 计算每行几何
+  // 1) 聚行 + 计算每行几何（保留每行的源文本项）
   const rawLines = groupLines(valid, H);
   const lines = rawLines.map((ln) => {
     const text = buildLineText(ln.items, H, opts);
     const left = Math.min(...ln.items.map((it) => it.x));
     const right = Math.max(...ln.items.map((it) => it.x + it.width));
-    return { text, left, right, y: ln.y };
+    return { text, left, right, y: ln.y, items: ln.items };
   }).filter((ln) => ln.text.trim() !== '');
-  if (!lines.length) return '';
-  if (lines.length === 1) return lines[0].text.trim();
+  if (!lines.length) return [];
+  if (lines.length === 1) return [{ text: lines[0].text.trim(), items: lines[0].items }];
 
   // 2) 版面度量
   const bodyLeft = bodyLeftOf(lines, H);
@@ -164,7 +163,8 @@ export function reflow(items, options = {}) {
 
   // 3) 逐行判断“换段 vs 软折行”，拼装段落
   const paragraphs = [];
-  let cur = lines[0].text;
+  let curText = lines[0].text;
+  let curItems = [...lines[0].items];
   for (let i = 1; i < lines.length; i++) {
     const prev = lines[i - 1];
     const line = lines[i];
@@ -175,15 +175,36 @@ export function reflow(items, options = {}) {
 
     const breakHere = bullet || indented || bigGap || prevShort;
     if (breakHere) {
-      paragraphs.push(cur.trim());
-      cur = line.text;
+      paragraphs.push({ text: curText.trim(), items: curItems });
+      curText = line.text;
+      curItems = [...line.items];
     } else {
-      cur = joinText(cur, line.text, opts);
+      curText = joinText(curText, line.text, opts);
+      curItems.push(...line.items);
     }
   }
-  paragraphs.push(cur.trim());
+  paragraphs.push({ text: curText.trim(), items: curItems });
 
-  return paragraphs.filter((p) => p !== '').join(opts.paragraphSeparator);
+  return paragraphs.filter((p) => p.text !== '');
+}
+
+function validItems(items) {
+  return (items || []).filter((it) => it && typeof it.str === 'string' && it.str.trim() !== '');
+}
+
+export function reflow(items, options = {}) {
+  const opts = { ...DEFAULTS, ...options };
+  const valid = validItems(items);
+  if (!valid.length) return '';
+  return buildParagraphs(valid, opts).map((p) => p.text).join(opts.paragraphSeparator);
+}
+
+// 把整页/整块文本项切成段落，返回 [{ text, items }]。供“点段落即复制”按段落命中使用。
+export function segmentParagraphs(items, options = {}) {
+  const opts = { ...DEFAULTS, ...options };
+  const valid = validItems(items);
+  if (!valid.length) return [];
+  return buildParagraphs(valid, opts);
 }
 
 // 供测试/复用的内部工具

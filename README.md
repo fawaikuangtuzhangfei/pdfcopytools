@@ -21,16 +21,18 @@ PDF 里没有「段落」这个概念，只有每个字的坐标。从 Chrome �
 ## 使用
 
 - 选中文字 → `Ctrl/⌘+C` → 粘贴即干净，右下角轻提示「已整理换行」。
+- **段落速复制**：鼠标悬停到某段，浮出「⧉ 复制整段」小按钮，点一下即复制整段（无需精确框选）。可在设置里关。
 - **要原始文本**：按住 `Alt` 再复制（可在设置里改成 Shift 或关闭）。
-- 工具栏图标弹窗可一键开关；「更多设置」里可调中英空格、连字符拼回、项目符号保留、提示开关等。
+- 工具栏图标弹窗可一键开关；「更多设置」里可调中英空格、连字符拼回、项目符号保留、提示开关、段落速复制等。
 
 ## 项目结构
 
 ```
 manifest.json          MV3 清单（DNR 重定向 / host_permissions / CSP）
 background.js          service worker：http(s) 用 DNR、file:// 用 webNavigation，重定向到 viewer.html?file=
-src/reflow.js          ★段落重建纯函数（坐标 → 干净文本，无 DOM 依赖）
+src/reflow.js          ★段落重建纯函数（坐标 → 干净文本；含 reflow / segmentParagraphs，无 DOM 依赖）
 src/copy-handler.js    在阅读器内 hook copy 事件，取选区几何 → reflow → 写回剪贴板
+src/paragraph-copy.js  hover 段落浮出「复制整段」按钮，按段落命中 → 整段进剪贴板
 src/toast.js           右下角轻提示
 options/ popup/        设置页与工具栏弹窗
 viewer/                vendored pdf.js 官方预构建阅读器（web/ + build/）
@@ -61,8 +63,8 @@ node tools/generate-icons.mjs  # 重新生成 icons/*.png
 ## 已知限制（MVP）
 
 - 只按 `.pdf` 后缀重定向；靠 `content-type` 无后缀提供的 PDF 暂回落到 Chrome 原生阅读器。
-- 在线 PDF 走 DNR，原始 URL 直接拼进 `?file=` 未做百分号编码，带 `&` 复杂查询参数的签名链接可能失效（本地文件走 `webNavigation`，已做编码，不受此限）。
-- 本地文件依赖用户手动开启「允许访问文件网址」，且 `webNavigation` 抢在原生阅读器前重定向时可能有极短暂闪烁。
+- 重定向分两条路：**干净的 `.pdf`**（无 `?`/`#`）走 DNR 原样重定向、无闪烁；**带 query/fragment 的**（如签名链接的 `?sig=..&exp=..`）与**本地文件**走 `webNavigation` + `encodeURIComponent`，参数不再丢失，但可能有极短暂闪烁。
+- 本地文件依赖用户手动开启「允许访问文件网址」。
 - 段落重建是启发式，复杂多栏 / 表格 / 公式版面会有误判；MVP 聚焦单栏正文。
 - 跨页选择时，页边距会被当作段落断（通常可接受）。
 

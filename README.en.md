@@ -21,16 +21,18 @@ Once installed, opening any `*.pdf` (online or local) drops into our viewer auto
 ## Usage
 
 - Select text → `Ctrl/⌘+C` → paste clean; a small toast "已整理换行" (line-wraps tidied) appears bottom-right.
+- **Paragraph quick-copy:** hover a paragraph and a "⧉ 复制整段" (copy whole paragraph) chip appears — one click copies the entire cleaned paragraph, no precise selection needed. Toggle in settings.
 - **Want the raw text?** Hold `Alt` while copying (configurable to Shift, or off).
-- The toolbar popup toggles the extension on/off; **More settings** exposes CJK/Latin spacing, de-hyphenation, bullet preservation, toast, and the raw-copy modifier.
+- The toolbar popup toggles the extension on/off; **More settings** exposes CJK/Latin spacing, de-hyphenation, bullet preservation, toast, paragraph quick-copy, and the raw-copy modifier.
 
 ## Project layout
 
 ```
 manifest.json          MV3 manifest (DNR redirect / host_permissions / CSP)
 background.js          service worker: DNR for http(s), webNavigation for file://, → viewer.html?file=
-src/reflow.js          ★ pure paragraph-rebuild function (coordinates → clean text, no DOM)
+src/reflow.js          ★ pure paragraph-rebuild (coordinates → clean text; reflow + segmentParagraphs, no DOM)
 src/copy-handler.js    hooks the copy event inside the viewer: selection geometry → reflow → clipboard
+src/paragraph-copy.js  hover a paragraph → "copy whole paragraph" chip → whole paragraph to clipboard
 src/toast.js           bottom-right toast
 options/ popup/        settings page & toolbar popup
 viewer/                vendored Mozilla pdf.js prebuilt viewer (Apache-2.0)
@@ -61,8 +63,8 @@ Upgrading pdf.js: download `pdfjs-<ver>-legacy-dist.zip` from https://github.com
 ## Known limitations (MVP)
 
 - Only `.pdf`-suffixed URLs are redirected; content-type-only PDFs without the suffix fall back to Chrome's native viewer.
-- Online PDFs go through DNR and the original URL is spliced into `?file=` without percent-encoding, so signed links with complex `&` query params may break (local files use `webNavigation` and are encoded, so they're unaffected).
-- Local files depend on the user manually enabling "Allow access to file URLs", and the `webNavigation` redirect that races ahead of the native viewer may flicker briefly.
+- Two redirect paths: **clean `.pdf`** URLs (no `?`/`#`) go through DNR, redirected raw with no flicker; **URLs with a query/fragment** (e.g. signed links `?sig=..&exp=..`) and **local files** go through `webNavigation` + `encodeURIComponent`, so params are no longer lost, at the cost of a brief flicker.
+- Local files depend on the user manually enabling "Allow access to file URLs".
 - Paragraph rebuild is heuristic; complex multi-column / table / formula layouts can misfire. The MVP targets single-column body text.
 - Cross-page selections treat the page margin as a paragraph break (usually acceptable).
 

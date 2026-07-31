@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { reflow, _internal } from '../src/reflow.js';
+import { reflow, segmentParagraphs, _internal } from '../src/reflow.js';
 
 // 便捷构造：一行一个 item（y 向下增大）
 const H = 12, LH = 18, LEFT = 100, RIGHT = 500;
@@ -205,6 +205,25 @@ test('行首小数不被误判为编号列表', () => {
     reflow(items),
     '上一行把整段填满一直到右边界处的内容3.14 大约等于圆周率不应被当作列表项',
   );
+});
+
+test('segmentParagraphs：两段各自成组，且带回源文本项', () => {
+  const a1 = ln('甲段第一行填满右边到边界处内容', LH);
+  const a2 = ln('甲段第二行也填满右边界的内容啊', LH * 2);
+  const b1 = ln('乙段第一行有缩进从这里开始写的', LH * 3, { x: LEFT + 2 * H, w: RIGHT - (LEFT + 2 * H) });
+  const b2 = ln('乙段第二行回到左边界继续写内容', LH * 4);
+  // 挂一个 node 引用，确认切段后能带出（点段落即复制要靠它映射回 DOM）
+  [a1, a2, b1, b2].forEach((it, i) => { it.node = `n${i}`; });
+  const paras = segmentParagraphs([a1, a2, b1, b2]);
+  assert.equal(paras.length, 2);
+  assert.equal(paras[0].text, '甲段第一行填满右边到边界处内容甲段第二行也填满右边界的内容啊');
+  assert.deepEqual(paras[0].items.map((it) => it.node), ['n0', 'n1']);
+  assert.deepEqual(paras[1].items.map((it) => it.node), ['n2', 'n3']);
+});
+
+test('segmentParagraphs：空输入返回空数组', () => {
+  assert.deepEqual(segmentParagraphs([]), []);
+  assert.deepEqual(segmentParagraphs(null), []);
 });
 
 test('_internal.groupLines 按 y 聚行', () => {

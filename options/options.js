@@ -5,10 +5,11 @@ const DEFAULTS = {
   cjkLatinSpace: false,
   keepBullets: true,
   showToast: true,
+  paragraphCopy: true,
   rawCopyModifier: 'alt',
 };
 
-const BOOLS = ['enabled', 'latinSpace', 'dehyphenate', 'cjkLatinSpace', 'keepBullets', 'showToast'];
+const BOOLS = ['enabled', 'latinSpace', 'dehyphenate', 'cjkLatinSpace', 'keepBullets', 'showToast', 'paragraphCopy'];
 const statusEl = document.getElementById('status');
 let statusTimer = null;
 

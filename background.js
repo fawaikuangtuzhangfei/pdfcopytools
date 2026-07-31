@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS = {
   cjkLatinSpace: false, // 中英边界加空格
   keepBullets: true,    // 保留项目符号/编号
   showToast: true,      // 复制后轻提示
+  paragraphCopy: true,  // hover 段落浮出「复制整段」按钮
   rawCopyModifier: 'alt', // 按住该键复制 = 原始复制（不净化）：'alt' | 'shift' | 'none'
 };
 
@@ -22,7 +23,12 @@ function viewerUrl() {
 }
 
 // 构造把 http(s) 的 *.pdf 导航重定向到 viewer.html?file=<原URL> 的动态规则。
-// 注意：DNR 工作在网络请求层，不拦截 file:// 本地导航——本地文件由下方 webNavigation 处理。
+// 注意：
+//  1) DNR 工作在网络请求层，不拦截 file:// 本地导航——本地文件由下方 webNavigation 处理。
+//  2) regexSubstitution 无法对 \0 做百分号编码；若原 URL 带 query/fragment（如签名链接的
+//     ?sig=..&exp=..），直接拼进 ?file= 会让后面的 &/# 被 viewer 的 URLSearchParams 吃掉而丢参。
+//     所以 DNR 只处理「无 query/fragment 的干净 .pdf」（原样拼接绝对安全）；带 ?/# 的交给
+//     下方 webNavigation 用 encodeURIComponent 正确编码。
 function buildRedirectRule() {
   return {
     id: REDIRECT_RULE_ID,
@@ -33,8 +39,8 @@ function buildRedirectRule() {
       redirect: { regexSubstitution: `${viewerUrl()}?file=\\0` },
     },
     condition: {
-      // 仅 http(s)、以 .pdf 结尾（忽略大小写）、主框架导航
-      regexFilter: '^https?://[^\\s]+\\.[pP][dD][fF](?:[?#][^\\s]*)?$',
+      // 仅 http(s)、以 .pdf 结尾（忽略大小写）、且无 query/fragment、主框架导航
+      regexFilter: '^https?://[^\\s?#]+\\.[pP][dD][fF]$',
       resourceTypes: ['main_frame'],
     },
   };
@@ -45,15 +51,21 @@ function isLocalPdf(url) {
   return /^file:\/\//i.test(url) && /\.pdf(?:[?#]|$)/i.test(url);
 }
 
-// file:// 本地 PDF：webNavigation 抢在原生阅读器前，把标签页导到我们的阅读器。
-// 需要用户在 chrome://extensions 打开「允许访问文件网址」，否则事件不会触发。
-async function handleLocalPdfNav(details) {
+// 带 query/fragment 的 http(s) PDF：DNR 已跳过（避免丢参），改由 webNavigation 编码处理。
+function isHttpPdfWithQuery(url) {
+  return /^https?:\/\//i.test(url) && /\.pdf[?#]/i.test(url);
+}
+
+// 需要我们接管的 PDF 导航：file:// 全部，http(s) 仅带 query/fragment 的（干净的走 DNR）。
+async function handlePdfNav(details) {
   if (details.frameId !== 0) return;            // 仅主框架
-  if (!isLocalPdf(details.url)) return;
+  const url = details.url;
+  if (!isLocalPdf(url) && !isHttpPdfWithQuery(url)) return;
   const { enabled } = await getSettings();
   if (!enabled) return;
-  // file:// 路径可能含空格等特殊字符 → 编码后交给 pdf.js（其用 URLSearchParams 会自动解码）
-  const target = `${viewerUrl()}?file=${encodeURIComponent(details.url)}`;
+  // 原 URL 可能含空格、&、# 等 → 整体编码为一个 token 交给 pdf.js
+  //（viewer 用 URLSearchParams 读取时会自动解码还原）
+  const target = `${viewerUrl()}?file=${encodeURIComponent(url)}`;
   try {
     await chrome.tabs.update(details.tabId, { url: target });
   } catch {
@@ -84,9 +96,14 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
 chrome.runtime.onStartup.addListener(syncRules);
 
-// 本地 PDF 重定向（http(s) 由 DNR 处理，这里只管 file://）
-chrome.webNavigation.onBeforeNavigate.addListener(handleLocalPdfNav, {
-  url: [{ urlPrefix: 'file://' }],
+// PDF 导航重定向：file:// 全部由这里处理；http(s) 里「干净 .pdf」走 DNR，
+// 「带 query/fragment 的」由这里编码处理（见 handlePdfNav / isHttpPdfWithQuery）。
+chrome.webNavigation.onBeforeNavigate.addListener(handlePdfNav, {
+  url: [
+    { urlPrefix: 'file://' },
+    { urlPrefix: 'http://' },
+    { urlPrefix: 'https://' },
+  ],
 });
 
 // 设置里改了总开关 → 立即启停规则
